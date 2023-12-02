@@ -1,1 +1,84 @@
-I
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Payment Request</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Mã JavaScript
+            var api_key = "xxxxx";
+            var client_id = "xxxxx";
+            var amount = 10000;
+            var description = "";
+            var buyer_name = "Người mua hàng";
+            var buyer_email = "nguoimuahaang@example.com";
+            var buyer_phone = "09876549321";
+            var buyer_address = "Địa chỉ người mua hàng";
+            var cancel_url = "https://test.com/plf";
+            var return_url = "https://test.com";
+            var expired_at = Math.floor(Date.now() / 1000) + 3600;
+            var checksum_key = "xxxx";
+
+            var items = [
+                {
+                    "name": "Sản phẩm 3",
+                    "quantity": 1,
+                    "price": 10000
+                }
+            ];
+
+            function createPaymentLink() {
+                var order_code = Math.floor(Math.random() * 100000000);
+                var data = "amount=" + amount + "&cancelUrl=" + cancel_url + "&description=" + description + "&orderCode=" + order_code + "&returnUrl=" + return_url;
+                var signature = CryptoJS.HmacSHA256(data, checksum_key).toString();
+
+                var payload = {
+                    "orderCode": order_code,
+                    "amount": amount,
+                    "description": description,
+                    "buyerName": buyer_name,
+                    "buyerEmail": buyer_email,
+                    "buyerPhone": buyer_phone,
+                    "buyerAddress": buyer_address,
+                    "items": items,
+                    "cancelUrl": cancel_url,
+                    "returnUrl": return_url,
+                    "expiredAt": expired_at,
+                    "signature": signature
+                };
+
+                var headers = {
+                    "x-client-id": client_id,
+                    "x-api-key": api_key,
+                    "Content-Type": "application/json"
+                };
+
+                $.ajax({
+                    url: "https://api-merchant.payos.vn/v2/payment-requests",
+                    type: "POST",
+                    headers: headers,
+                    data: JSON.stringify(payload),
+                    success: function(response) {
+                        console.log(response)
+                        var payment_link = response.checkoutUrl;
+                        console.log("Link thanh toán của đơn hàng:", payment_link);
+                        window.location.href = payment_link; // Chuyển hướng đến link thanh toán
+                    },
+                    error: function() {
+                        window.location.href = "https:///test.com"
+                        console.log("Có lỗi xảy ra trong quá trình tạo link thanh toán");
+                    }
+                });
+            }
+
+            $("#buy-now-button").click(function() {
+                createPaymentLink();
+            });
+        });
+    </script>
+</head>
+<body>
+    <button id="buy-now-button">Mua ngay</button>
+</body>
+</html>
